@@ -11,6 +11,7 @@ using Sustainsys.Saml2.Owin;
 using Sustainsys.Saml2.Saml2P;
 using Sustainsys.Saml2.WebSso;
 using System;
+using System.Configuration;
 using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
@@ -60,17 +61,17 @@ namespace SampleOwinApplication
            
             };
 
-            var idp = new IdentityProvider(new EntityId("http://sts.azurehybrid.tk/adfs/services/trust"), spOptions)
+            var idp = new IdentityProvider(new EntityId(ConfigurationManager.AppSettings["IDPEntityID"]), spOptions)
             {
 
                 WantAuthnRequestsSigned = true,
                 AllowUnsolicitedAuthnResponse = true,
-                MetadataLocation = "https://sts.azurehybrid.tk/FederationMetadata/2007-06/FederationMetadata.xml",
+                MetadataLocation = ConfigurationManager.AppSettings["IDPMetadataURL"],
                 LoadMetadata = true,
                 Binding = Saml2BindingType.HttpRedirect,
                 //SingleSignOnServiceUrl = new Uri("https://stubidp.sustainsys.com")
-                SingleSignOnServiceUrl = new Uri("https://sts.azurehybrid.tk/adfs/ls/"),
-                SingleLogoutServiceUrl = new Uri("https://sts.azurehybrid.tk/adfs/ls/"),
+                SingleSignOnServiceUrl = new Uri(ConfigurationManager.AppSettings["IDPLoginURL"]),
+                SingleLogoutServiceUrl = new Uri(ConfigurationManager.AppSettings["IDPLoginURL"]),
                // SingleLogoutServiceResponseUrl = new Uri("https://localhost:44303/saml2/logout"),
                 DisableOutboundLogoutRequests = false
             };
@@ -78,6 +79,7 @@ namespace SampleOwinApplication
                 new X509Certificate2(
                     HostingEnvironment.MapPath(
                         //"~/App_Data/stubidp.sustainsys.com.cer")));
+                        //IDP Signing Certificate
                         "~/App_Data/adfssiging.cer")));
 
             Saml2Options.IdentityProviders.Add(idp);
@@ -102,6 +104,7 @@ namespace SampleOwinApplication
                 //Organization = organization
             };
             spOptions.ServiceCertificates.Add(new X509Certificate2(
+                //SP Signing Certificate
                 AppDomain.CurrentDomain.SetupInformation.ApplicationBase + "/App_Data/Sustainsys.Saml2.Tests.pfx"));
 
             return spOptions;
