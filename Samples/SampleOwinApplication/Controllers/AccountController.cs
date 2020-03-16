@@ -9,6 +9,8 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using SampleOwinApplication.Models;
+using Microsoft.Owin.Security.Cookies;
+using Sustainsys.Saml2.Owin;
 
 namespace SampleOwinApplication.Controllers
 {
@@ -393,9 +395,11 @@ namespace SampleOwinApplication.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult LogOff()
+        //public void LogOff()
         {
             AuthenticationManager.SignOut();
             return RedirectToAction("Index", "Home");
+            //return RedirectToAction("Logout", "Saml2");
         }
 
         //

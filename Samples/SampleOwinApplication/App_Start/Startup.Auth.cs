@@ -8,9 +8,11 @@ using Sustainsys.Saml2;
 using Sustainsys.Saml2.Configuration;
 using Sustainsys.Saml2.Metadata;
 using Sustainsys.Saml2.Owin;
+using Sustainsys.Saml2.Saml2P;
 using Sustainsys.Saml2.WebSso;
 using System;
 using System.Globalization;
+using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Web.Hosting;
 
@@ -45,88 +47,60 @@ namespace SampleOwinApplication
             app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
 
             app.UseSaml2Authentication(CreateSaml2Options());
+               
         }
 
         private static Saml2AuthenticationOptions CreateSaml2Options()
+        
         {
             var spOptions = CreateSPOptions();
             var Saml2Options = new Saml2AuthenticationOptions(false)
             {
                 SPOptions = spOptions
+           
             };
 
-            var idp = new IdentityProvider(new EntityId("https://stubidp.sustainsys.com/Metadata"), spOptions)
-                {
-                    AllowUnsolicitedAuthnResponse = true,
-                    Binding = Saml2BindingType.HttpRedirect,
-                    SingleSignOnServiceUrl = new Uri("https://stubidp.sustainsys.com")
-                };
+            var idp = new IdentityProvider(new EntityId("http://sts.azurehybrid.tk/adfs/services/trust"), spOptions)
+            {
 
+                WantAuthnRequestsSigned = true,
+                AllowUnsolicitedAuthnResponse = true,
+                MetadataLocation = "https://sts.azurehybrid.tk/FederationMetadata/2007-06/FederationMetadata.xml",
+                LoadMetadata = true,
+                Binding = Saml2BindingType.HttpRedirect,
+                //SingleSignOnServiceUrl = new Uri("https://stubidp.sustainsys.com")
+                SingleSignOnServiceUrl = new Uri("https://sts.azurehybrid.tk/adfs/ls/"),
+                SingleLogoutServiceUrl = new Uri("https://sts.azurehybrid.tk/adfs/ls/"),
+               // SingleLogoutServiceResponseUrl = new Uri("https://localhost:44303/saml2/logout"),
+                DisableOutboundLogoutRequests = false
+            };
             idp.SigningKeys.AddConfiguredKey(
                 new X509Certificate2(
                     HostingEnvironment.MapPath(
-                        "~/App_Data/stubidp.sustainsys.com.cer")));
+                        //"~/App_Data/stubidp.sustainsys.com.cer")));
+                        "~/App_Data/adfssiging.cer")));
 
             Saml2Options.IdentityProviders.Add(idp);
 
             // It's enough to just create the federation and associate it
             // with the options. The federation will load the metadata and
             // update the options with any identity providers found.
-            new Federation("https://localhost:44300/Federation", true, Saml2Options);
+            //new Federation("https://sts.azurehybrid.tk/FederationMetadata/2007-06/FederationMetadata.xml", true, Saml2Options);
 
             return Saml2Options;
         }
 
         private static SPOptions CreateSPOptions()
         {
-            var swedish = "sv-se";
-
-            var organization = new Organization();
-            organization.Names.Add(new LocalizedName("Sustainsys", swedish));
-            organization.DisplayNames.Add(new LocalizedName("Sustainsys AB", swedish));
-            organization.Urls.Add(new LocalizedUri(new Uri("http://www.Sustainsys.se"), swedish));
-
+            
             var spOptions = new SPOptions
             {
                 EntityId = new EntityId("https://localhost:44303/Saml2"),
                 ReturnUrl = new Uri("https://localhost:44303/Account/ExternalLoginCallback"),
-                DiscoveryServiceUrl = new Uri("https://localhost:44300/DiscoveryService"),
-                Organization = organization
+                AuthenticateRequestSigningBehavior = SigningBehavior.Always,
+               // DiscoveryServiceUrl = new Uri("https://localhost:44300/DiscoveryService"),
+                //Organization = organization
             };
-
-            var techContact = new ContactPerson
-            {
-                Type = ContactType.Technical
-            };
-            techContact.EmailAddresses.Add("Saml2@example.com");
-            spOptions.Contacts.Add(techContact);
-
-            var supportContact = new ContactPerson
-            {
-                Type = ContactType.Support
-            };
-            supportContact.EmailAddresses.Add("support@example.com");
-            spOptions.Contacts.Add(supportContact);
-
-            var attributeConsumingService = new AttributeConsumingService
-            {
-                IsDefault = true,
-				ServiceNames = { new LocalizedName("Saml2", "en") }
-			};
-
-            attributeConsumingService.RequestedAttributes.Add(
-                new RequestedAttribute("urn:someName")
-                {
-                    FriendlyName = "Some Name",
-                    IsRequired = true,
-                    NameFormat = RequestedAttribute.AttributeNameFormatUri
-                });
-
-            attributeConsumingService.RequestedAttributes.Add(
-                new RequestedAttribute("Minimal"));
-
-            spOptions.AttributeConsumingServices.Add(attributeConsumingService);
-
             spOptions.ServiceCertificates.Add(new X509Certificate2(
                 AppDomain.CurrentDomain.SetupInformation.ApplicationBase + "/App_Data/Sustainsys.Saml2.Tests.pfx"));
 
