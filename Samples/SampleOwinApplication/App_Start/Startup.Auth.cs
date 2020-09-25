@@ -16,6 +16,7 @@ using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Web.Hosting;
+using System.Diagnostics;
 
 namespace SampleOwinApplication
 {
@@ -48,7 +49,8 @@ namespace SampleOwinApplication
             app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
 
             app.UseSaml2Authentication(CreateSaml2Options());
-               
+
+
         }
 
         private static Saml2AuthenticationOptions CreateSaml2Options()
@@ -69,18 +71,20 @@ namespace SampleOwinApplication
                 MetadataLocation = ConfigurationManager.AppSettings["IDPMetadataURL"],
                 LoadMetadata = true,
                 Binding = Saml2BindingType.HttpRedirect,
+                //Logout Binding
+                //SingleLogoutServiceBinding = Saml2BindingType.HttpPost,
                 //SingleSignOnServiceUrl = new Uri("https://stubidp.sustainsys.com")
                 SingleSignOnServiceUrl = new Uri(ConfigurationManager.AppSettings["IDPLoginURL"]),
                 SingleLogoutServiceUrl = new Uri(ConfigurationManager.AppSettings["IDPLoginURL"]),
-               // SingleLogoutServiceResponseUrl = new Uri("https://localhost:44303/saml2/logout"),
+                //SingleLogoutServiceResponseUrl = new Uri("https://localhost:44303/saml2/logout"),
                 DisableOutboundLogoutRequests = false
             };
-            idp.SigningKeys.AddConfiguredKey(
-                new X509Certificate2(
-                    HostingEnvironment.MapPath(
-                        //"~/App_Data/stubidp.sustainsys.com.cer")));
-                        //IDP Signing Certificate
-                        "~/App_Data/adfssiging.cer")));
+            //idp.SigningKeys.AddConfiguredKey(
+            //    new X509Certificate2(
+            //        HostingEnvironment.MapPath(
+            //            //"~/App_Data/stubidp.sustainsys.com.cer")));
+            //            //IDP Signing Certificate
+            //            "~/App_Data/adfssiging.cer")));
 
             Saml2Options.IdentityProviders.Add(idp);
 
@@ -88,6 +92,7 @@ namespace SampleOwinApplication
             // with the options. The federation will load the metadata and
             // update the options with any identity providers found.
             //new Federation("https://sts.azurehybrid.tk/FederationMetadata/2007-06/FederationMetadata.xml", true, Saml2Options);
+            //Debug.WriteLine("stop here");
 
             return Saml2Options;
         }
@@ -99,15 +104,22 @@ namespace SampleOwinApplication
             {
                 EntityId = new EntityId("https://localhost:44303/Saml2"),
                 ReturnUrl = new Uri("https://localhost:44303/Account/ExternalLoginCallback"),
-                AuthenticateRequestSigningBehavior = SigningBehavior.Always,
+                //NameIdPolicy = new Saml2NameIdPolicy(true, NameIdFormat.EmailAddress),
+                RequestedAuthnContext = new Saml2RequestedAuthnContext(new Uri("urn:federation:authentication:windows"), AuthnContextComparisonType.Exact),
+                //RequestedAuthnContext = new Saml2RequestedAuthnContext(new RequestedAuthnContextElement()),
+                
+
+                //AuthenticateRequestSigningBehavior = SigningBehavior.Always,
                // DiscoveryServiceUrl = new Uri("https://localhost:44300/DiscoveryService"),
                 //Organization = organization
             };
             spOptions.ServiceCertificates.Add(new X509Certificate2(
-                //SP Signing Certificate
+            //    //SP Signing Certificate
                 AppDomain.CurrentDomain.SetupInformation.ApplicationBase + "/App_Data/Sustainsys.Saml2.Tests.pfx"));
 
             return spOptions;
         }
+
+     
     }
 }

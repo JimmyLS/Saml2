@@ -48,6 +48,9 @@ namespace SampleOwinApplication.Controllers
         {
             ViewBag.ReturnUrl = returnUrl;
             return View();
+            //string provider = "Saml2";
+            // Request a redirect to the external login provider
+            //return new ChallengeResult(provider, Url.Action("ExternalLoginCallback", "Account", new { ReturnUrl = returnUrl }));
         }
 
         private ApplicationSignInManager _signInManager;
@@ -275,6 +278,7 @@ namespace SampleOwinApplication.Controllers
         {
             return View();
         }
+
 
         //
         // POST: /Account/ExternalLogin

@@ -253,6 +253,7 @@
     <Content Include="App_Data\Sustainsys.Saml2.Tests.pfx" />
     <Content Include="App_Data\stubidp.sustainsys.com.cer" />
     <Content Include="App_Data\adfssiging.cer" />
+    <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
     <Content Include="Scripts\jquery-2.1.1.js" />
